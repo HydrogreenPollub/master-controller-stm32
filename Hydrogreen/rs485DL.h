@@ -13,6 +13,7 @@
 
 // ******************************************************************************************************************************************************** //
 
+#define DATA_LOGGER_DELAY 100
 #define RS485_FLT_NONE_DL 0x00					///< Brak bledu
 #define RS485_NEW_DATA_TIMEOUT_DL 0x11				///< Nie otrzymano nowych dane (polaczenie zostalo zerwane)
 
@@ -80,8 +81,8 @@ typedef struct
  // uint8_t fcToScMosfetPWM;
   uint8_t emergencyC;
 
-} RS485_RECEIVED_VERIFIED_DATA_DL;
-extern RS485_RECEIVED_VERIFIED_DATA_DL RS485_RX_VERIFIED_DATA_DL;
+} RS485_DATA_DL;
+extern RS485_DATA_DL RS485_DL_DATA_TO_TX;
 /**
 * @struct RS485_NEW_DATA_DL
 * @brief Struktura zawierajaca wysylane dane

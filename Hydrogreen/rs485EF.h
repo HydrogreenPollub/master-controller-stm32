@@ -24,7 +24,7 @@ extern void rs485_init_EF(void);					///< Inicjalizacja magistrali RS-485, umies
 extern void rs485_step_EF(void);					///< Funkcja obslugujaca magistrale, umiescic wewnatrz hydrogreen_step(void)
 
 #define UART_PORT_RS485_EF 		huart1
-#define RX_FRAME_LENGHT_EF 		21					///< Dlugosc otrzymywanej ramki danych (z suma CRC)#define EOT_BYTE_EF			    0x17				///< Bajt wskazujacy na koniec ramki
+#define RX_FRAME_LENGHT_EF 		25					///< Dlugosc otrzymywanej ramki danych (z suma CRC)#define EOT_BYTE_EF			    0x17				///< Bajt wskazujacy na koniec ramki
 
 // ******************************************************************************************************************************************************** //
 //Zmienne dla transmisji danych z przeplywem energii
@@ -76,6 +76,12 @@ typedef struct
        uint16_t value;
        uint8_t array[2];
      } fcFanRPM;
+
+     union
+      {
+        float value;
+        uint8_t array[4];
+      } FC_CURRENT;
 
  // uint8_t fcToScMosfetPWM;
   uint8_t emergency;

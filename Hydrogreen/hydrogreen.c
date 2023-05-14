@@ -44,7 +44,7 @@ static void hydrogreen_init(void)
 	 rs485_init_EF();
 	 safety_init();
 
-	// rs485_init_DL();
+	 rs485_init_DL();
 
 }
 
@@ -57,12 +57,17 @@ static inline void hydrogreen_step1kHz(void)
 #ifdef HYDROGREEN_DEBUG
   HAL_GPIO_WritePin(GPIOA, DBG_Pin, GPIO_PIN_RESET);
 #endif
-
+  static uint8_t cnt = 0;
   hydrogensensor_step();
   measurements_step();
   pid_step();
   safety_step();
-
+  if(cnt >= DATA_LOGGER_DELAY)
+  {
+	  rs485_step_DL();
+	  cnt = 0;
+  }
+  cnt ++;
 
   watchdog_step();
 #ifdef HYDROGREEN_DEBUG
@@ -77,13 +82,8 @@ static inline void hydrogreen_step1kHz(void)
 static inline void hydrogreen_step10kHz(void)
 {
 
-
-
      rs485_step_SW();
-
 	 rs485_step_EF();
-
-	 rs485_step_DL();
 
 }
 
@@ -98,7 +98,7 @@ void hydrogreen_main(void)
   while (1)
     {
       //Sprawdz czy wystapil tick timera nastepujacy z f = 1kHz
-      if (timers_tick1kHz)
+    if (timers_tick1kHz)
 	{
 	  timers_beforeStep1kHz();
 

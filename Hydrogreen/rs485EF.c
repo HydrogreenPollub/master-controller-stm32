@@ -18,7 +18,7 @@
 //Ramka danych z przeplywem energii
 #define UART_PORT_RS485_EF 		huart1
 #define TX_FRAME_LENGHT_EF 		6					///< Dlugosc wysylanej ramki danych (z suma CRC)
-#define RX_FRAME_LENGHT_EF 		21					///< Dlugosc otrzymywanej ramki danych (z suma CRC)
+#define RX_FRAME_LENGHT_EF 		25					///< Dlugosc otrzymywanej ramki danych (z suma CRC)
 #define EOT_BYTE_EF			    0x17				///< Bajt wskazujacy na koniec ramki
 
 // ******************************************************************************************************************************************************** //
@@ -314,6 +314,11 @@ static void processReceivedData_EF(void)
   for (uint8_t k = 0; k < 2; k++)
     {
       RS485_RX_VERIFIED_DATA_EF.fcFanRPM.array[k] = dataFromRx_EF[++i];
+    }
+
+  for (uint8_t k = 0; k < 4; k++)
+    {
+	  RS485_RX_VERIFIED_DATA_EF.FC_CURRENT.array[k] = dataFromRx_EF[++i];
     }
 }
 /**
