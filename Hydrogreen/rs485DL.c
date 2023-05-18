@@ -17,7 +17,7 @@
 // ******************************************************************************************************************************************************** //
 //Ramka danych z przeplywem energii
 #define UART_PORT_RS485_DL		huart4
-#define TX_FRAME_LENGHT_DL 		46					///< Dlugosc wysylanej ramki danych (z suma CRC)
+#define TX_FRAME_LENGHT_DL 		40					///< Dlugosc wysylanej ramki danych (z suma CRC)
 #define EOT_BYTE_DL			    0x17				///< Bajt wskazujacy na koniec ramki
 
 // ******************************************************************************************************************************************************** //
@@ -50,7 +50,6 @@ static void prepareNewDataToSend_DL(void);
  * crc_calc(void)
  * Funkcja obliczajaca sume kontrolna dla RX
  */
-
 uint8_t crc_calc_DL(void) {
 	uint8_t crcSumOnMCU_DL = 0xFF;
 	uint8_t xbit, data1 = 1;
@@ -136,67 +135,75 @@ static void sendData_DL(void) {
 
 	prepareNewDataToSend_DL();
 }
-
+void organizeData();
 /**
  * @fn prepareNewDataToSend(void)
  * @brief Funkcja przygotowujaca dane do wysylki, wykorzystana wewnatrz sendData(void) dla data loggera
  */
 static void prepareNewDataToSend_DL(void) {
-
+	  union {
+	    struct { // TODO remove bitfield since it won't be used here anyway
+	      uint8_t is_emergency:1;
+	      uint8_t is_hydrogen_leaking:1;
+	      uint8_t is_SC_relay_closed:1;
+	      uint8_t vehicle_is_speed_button_pressed:1;
+	      uint8_t vehicle_is_half_speed_button_pressed:1;
+	      uint8_t hydrogen_cell_button_state:2; // Split into two variables?
+	      uint8_t is_super_capacitor_button_pressed:1;
+	    };
+	    uint8_t logic_state;
+	  } logic_struct;
 	uint8_t j = 0;
+	logic_struct.is_emergency = RS485_TX_DATA_EF.emergencyScenario;
+	logic_struct.is_hydrogen_leaking = RS485_TX_DATA_SW.h2SensorDigitalPin;
+	logic_struct.is_SC_relay_closed = RS485_RX_VERIFIED_DATA_SW.scClose;
+	logic_struct.vehicle_is_speed_button_pressed = RS485_RX_VERIFIED_DATA_SW.fullGas;
+	logic_struct.vehicle_is_half_speed_button_pressed = RS485_RX_VERIFIED_DATA_SW.halfGas;
+	logic_struct.hydrogen_cell_button_state = RS485_TX_DATA_EF.fuellCellModeButtons;
+	logic_struct.is_super_capacitor_button_pressed = RS485_RX_VERIFIED_DATA_SW.scClose;
+	//############ SEND ###############
+	dataToTx_DL[j] = logic_struct.logic_state;
 
-	dataToTx_DL[j] = RS485_TX_DATA_EF.fuellCellModeButtons;
-	dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_SW.scClose;
-	dataToTx_DL[++j] = RS485_TX_DATA_EF.emergencyScenario;
-	dataToTx_DL[++j] = RS485_TX_DATA_EF.motorPWM;
-
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.interimSpeed;
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.averageSpeed;
-
-	for (uint8_t k = 0; k < 2; k++) {
-		dataToTx_DL[++j] = RS485_TX_DATA_SW.laptime_minutes.array[k];
+	for (uint8_t k = 0; k < 4; k++) {
+		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.FC_CURRENT.array[k];
 	}
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.laptime_seconds;
 
-	for (uint8_t k = 0; k < 2; k++) {
-		dataToTx_DL[++j] = RS485_TX_DATA_SW.laptime_miliseconds.array[k];
+	for (uint8_t k = 0; k < 4; k++) {
+		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.CURRENT_SENSOR_FC_TO_SC.array[k];
 	}
+
+	for (uint8_t k = 0; k < 4; k++) {
+	    dataToTx_DL[++j] = RS485_TX_DATA_SW.CURRENT_SENSOR_SC_TO_MOTOR.array[k];
+	}
+
 	for (uint8_t k = 0; k < 4; k++) {
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.FC_V.array[k];
 	}
+
+	for (uint8_t k = 0; k < 4; k++) {
+		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.SC_V.array[k];
+	}
+
+	for (uint8_t k = 0; k < 4; k++) {
+		dataToTx_DL[++j] = RS485_TX_DATA_SW.H2_SENSOR_V.array[k];
+	}
+
 	for (uint8_t k = 0; k < 4; k++) {
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.FC_TEMP.array[k];
 	}
 	for (uint8_t k = 0; k < 2; k++) {
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.fcFanRPM.array[k];
 	}
-	for (uint8_t k = 0; k < 4; k++) {
-		dataToTx_DL[++j] =
-				RS485_RX_VERIFIED_DATA_EF.CURRENT_SENSOR_FC_TO_SC.array[k];
-	}
-	for (uint8_t k = 0; k < 4; k++) {
-		dataToTx_DL[++j] = RS485_TX_DATA_SW.CURRENT_SENSOR_SC_TO_MOTOR.array[k];
-	}
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.fcToScMosfetPWM;
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.motorPWM;
 
-	for (uint8_t k = 0; k < 4; k++) {
-		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.SC_V.array[k];
-	}
+	dataToTx_DL[++j] = RS485_TX_DATA_SW.interimSpeed;
+
+	dataToTx_DL[++j] = RS485_TX_DATA_EF.motorPWM;
+
 	for (uint8_t k = 0; k < 4; k++) {
 		dataToTx_DL[++j] = RS485_TX_DATA_SW.H2_SENSOR_V.array[k];
 	}
-
-	for (uint8_t k = 0; k < 4; k++) {
-		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.FC_CURRENT.array[k];
-	}
-
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.h2SensorDigitalPin;
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.emergencyButton;
-	dataToTx_DL[++j] = EOT_BYTE_DL;
-
 	//OBLICZ SUME KONTROLNA
 
 	//Wrzuc obliczona sume kontrolna na koniec wysylanej tablicy
-	dataToTx_DL[TX_FRAME_LENGHT_DL - 1] = crc_calc_TX_DL();
+	//dataToTx_DL[TX_FRAME_LENGHT_DL - 1] = crc_calc_TX_DL();
 }
