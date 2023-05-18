@@ -13,7 +13,7 @@
 
 // ******************************************************************************************************************************************************** //
 
-#define DATA_LOGGER_DELAY 100
+#define DATA_LOGGER_DELAY 200
 #define RS485_FLT_NONE_DL 0x00					///< Brak bledu
 #define RS485_NEW_DATA_TIMEOUT_DL 0x11				///< Nie otrzymano nowych dane (polaczenie zostalo zerwane)
 

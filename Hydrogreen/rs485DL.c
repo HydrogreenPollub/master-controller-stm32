@@ -135,7 +135,6 @@ static void sendData_DL(void) {
 
 	prepareNewDataToSend_DL();
 }
-void organizeData();
 /**
  * @fn prepareNewDataToSend(void)
  * @brief Funkcja przygotowujaca dane do wysylki, wykorzystana wewnatrz sendData(void) dla data loggera
