@@ -46,7 +46,7 @@ void pid_step(void){
 		}else if(RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0 ){
 			Motor_Speed_PID.PIDmotorValue = 0;
 		}else if(RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1 ){
-			Motor_Speed_PID.PIDmotorValue = 0;
+			Motor_Speed_PID.PIDmotorValue = 0; //było bylo 0
 
 		}
 		RS485_TX_DATA_EF.motorPWM = Motor_Speed_PID.PIDmotorValue;

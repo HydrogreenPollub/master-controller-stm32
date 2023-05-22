@@ -258,9 +258,10 @@ void softstart(void)
 		PWMMotor = 0;
 	}
 	if (RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1 ){
-		RS485_TX_DATA_EF.motorPWM = 0;
-		RS485_TX_DATA_SW.motorPWM = 0;
-		PWMMotor = 0;
+
+		RS485_TX_DATA_EF.motorPWM = 20;// bylo 0
+		RS485_TX_DATA_SW.motorPWM = 20;/// bylo 0
+		PWMMotor = 20;// bylo 0
 	}
 
 }

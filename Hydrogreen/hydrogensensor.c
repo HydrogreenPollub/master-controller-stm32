@@ -45,7 +45,7 @@ static unsigned long int FirstTick;
 	baterry_V = (((float) dataToCalculate[1])* prescaler)/4095.0f;
 
     RS485_TX_DATA_SW.H2_SENSOR_V.array[0] = h2_V;
-    if(!HAL_GPIO_ReadPin(H2_Digital_GPIO_Port, H2_Digital_Pin))
+    if(HAL_GPIO_ReadPin(H2_Digital_GPIO_Port, H2_Digital_Pin))
     {
     	if(!H2counter)
     	{
@@ -54,13 +54,14 @@ static unsigned long int FirstTick;
     	H2counter = 1;
     	if(HAL_GetTick() - FirstTick >= 76)
     	{
-			RS485_TX_DATA_SW.h2SensorDigitalPin = 1;
+			RS485_TX_DATA_SW.h2SensorDigitalPin = 0; ///zmiana polaryzacji 22.p5.2023
     	}
     }
     else
     {
     	H2counter = 0;
     	FirstTick = 0;
+    	RS485_TX_DATA_SW.h2SensorDigitalPin = 1;
     }
 
 }

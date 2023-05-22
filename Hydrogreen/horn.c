@@ -57,11 +57,12 @@ void safety_step(void){
 		RS485_TX_DATA_SW.motorPWM = 0;
 	}
 	if(RS485_TX_DATA_SW.h2SensorDigitalPin == 1){
+
 		RS485_TX_DATA_SW.emergencyButton = 1;
-					RS485_TX_DATA_EF.emergencyScenario = 1;
-					HAL_GPIO_WritePin(GPIOC, Solenoid_Valve_GPIO_Pin, GPIO_PIN_RESET);
-					HAL_GPIO_WritePin(GPIOB, Emergency_Relay_GPIO_Pin, GPIO_PIN_RESET);
-					RS485_TX_DATA_EF.motorPWM = 0;
-					RS485_TX_DATA_SW.motorPWM = 0;
+		RS485_TX_DATA_EF.emergencyScenario = 1;
+		HAL_GPIO_WritePin(GPIOC, Solenoid_Valve_GPIO_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOB, Emergency_Relay_GPIO_Pin, GPIO_PIN_RESET);
+		RS485_TX_DATA_EF.motorPWM = 0;
+		RS485_TX_DATA_SW.motorPWM = 0;
 	}
 }
