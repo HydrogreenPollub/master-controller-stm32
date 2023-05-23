@@ -45,7 +45,6 @@ static void hydrogreen_init(void)
 	 safety_init();
 
 	 rs485_init_DL();
-
 }
 
 /**

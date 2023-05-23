@@ -225,23 +225,22 @@ void calcSpeed(void)
 //fullgas 30 km/h, halfgas 15 km/h
 
 void softstart(void)
-{
+{}
 
 
 //softstart od 0 do max/4 PWM w 5 sekund na ten moment 5000ms/25%PWM= 200 ms to +1 PWM
-	if(RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0 ){
+/*	if(RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0 ){
 		if(calcInterimSpeed >= 0 && calcInterimSpeed < 1){
 		timeIncreasePWM++;
 		 if(timeIncreasePWM >= PERIOD_1MS * 30 && PWMMotor < 100){
 		    	PWMMotor++;
 		   		timeIncreasePWM = 0;
-
-		    		RS485_TX_DATA_EF.motorPWM = PWMMotor;
-		    		RS485_TX_DATA_SW.motorPWM = PWMMotor;
+		    	RS485_TX_DATA_EF.motorPWM = PWMMotor;
+		    	RS485_TX_DATA_SW.motorPWM = PWMMotor;
 		    		if(PWMMotor == 100){
-		    		calcInterimSpeed = 1;
-		    		RS485_TX_DATA_EF.motorPWM = 100;
-		    		RS485_TX_DATA_SW.motorPWM = 100;
+		    			calcInterimSpeed = 1;
+						RS485_TX_DATA_EF.motorPWM = 100;
+						RS485_TX_DATA_SW.motorPWM = 100;
 		    		//PWMMotor = 0;
 		    	}
 		    }
@@ -259,9 +258,9 @@ void softstart(void)
 	}
 	if (RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1 ){
 
-		RS485_TX_DATA_EF.motorPWM = 20;// bylo 0
-		RS485_TX_DATA_SW.motorPWM = 20;/// bylo 0
-		PWMMotor = 20;// bylo 0
+		RS485_TX_DATA_EF.motorPWM = 40;// bylo 0
+		RS485_TX_DATA_SW.motorPWM = 40;/// bylo 0
+		PWMMotor = 40;// bylo 0
 	}
 
-}
+}*/

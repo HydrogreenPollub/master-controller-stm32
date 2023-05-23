@@ -60,11 +60,11 @@ typedef struct
 	uint8_t halfGas;
 	uint8_t fullGas;
 	uint8_t horn;
-	uint8_t speedReset;
-	uint8_t powerSupply;
-	uint8_t scClose;
-	uint8_t fuelcellOff;
-	uint8_t fuelcellPrepareToRace;
+	uint8_t speedReset; // star/stop lap time timer
+	uint8_t powerSupply; // emergency button
+	uint8_t scClose; // supercapacitors closed (black right switch)
+	uint8_t fuelcellOff; //
+	uint8_t fuelcellPrepareToRace; // purge valve
 	uint8_t fuelcellRace;
 }RS485_RECEIVED_VERIFIED_DATA_SW;
 extern RS485_RECEIVED_VERIFIED_DATA_SW RS485_RX_VERIFIED_DATA_SW;

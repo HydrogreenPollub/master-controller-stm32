@@ -334,11 +334,11 @@ static void processReceivedData_SW(void)
   RS485_RX_VERIFIED_DATA_SW.fuelcellRace = dataFromRx_SW[++i];
 
   //stany przyciskow wysylane do EF
-  if(  RS485_RX_VERIFIED_DATA_SW.fuelcellOff == 1){
+  if(  RS485_RX_VERIFIED_DATA_SW.fuelcellOff == 1){ // purging
 	  RS485_TX_DATA_EF.fuellCellModeButtons = 1;
-  } else if(  RS485_RX_VERIFIED_DATA_SW.fuelcellPrepareToRace == 1){
+  } else if(  RS485_RX_VERIFIED_DATA_SW.fuelcellPrepareToRace == 1){ // race
 	  RS485_TX_DATA_EF.fuellCellModeButtons = 2;
-  } else if(  RS485_RX_VERIFIED_DATA_SW.fuelcellRace ==1){
+  } else if(  RS485_RX_VERIFIED_DATA_SW.fuelcellRace ==1){ // idle - supercapacitor charging
 	  RS485_TX_DATA_EF.fuellCellModeButtons = 3;
   }
   if(  RS485_RX_VERIFIED_DATA_SW.powerSupply == 1){

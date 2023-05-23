@@ -13,6 +13,8 @@
 #include "measurements.h"
 
 PID_struct Motor_Speed_PID;
+uint16_t softstart_time_elapsed;
+uint16_t half_gas_time_elapsed;
 
 void pid_init(void){
 	Motor_Speed_PID.previousError = 0; 		//Poprzedni błąd dla członu różniczkującego
@@ -37,18 +39,36 @@ void pid_init(void){
 }
 
 void pid_step(void){
-
-	if (calcInterimSpeed >=1){
-		if(RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1 ){
-			Motor_Speed_PID.PIDmotorValue = 130;
-		}else if(RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0){
-			Motor_Speed_PID.PIDmotorValue = 235;
-		}else if(RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0 ){
-			Motor_Speed_PID.PIDmotorValue = 0;
-		}else if(RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1 ){
-			Motor_Speed_PID.PIDmotorValue = 0; //było bylo 0
-
+	//if (calcInterimSpeed >=1){
+		if (RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1)
+		{
+			// Softstart - 2 buttons
+			if (softstart_time_elapsed <= 5000) {
+				Motor_Speed_PID.PIDmotorValue = 0.018 * softstart_time_elapsed + 10;
+				softstart_time_elapsed++;
+			}
 		}
+		else if (RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0)
+		{
+			// Full gas
+			Motor_Speed_PID.PIDmotorValue = 235;
+			half_gas_time_elapsed = 0;
+		}
+		else if (RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0)
+		{
+			// Buttons released - no power on motor
+			Motor_Speed_PID.PIDmotorValue = 0;
+			half_gas_time_elapsed = 0;
+		}
+		else if (RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1 )
+		{
+			// Half gas - slow linear PWM increase
+			Motor_Speed_PID.PIDmotorValue = 0.025 * half_gas_time_elapsed;
+			if (half_gas_time_elapsed <= 5000) {
+				half_gas_time_elapsed++;
+			}
+		}
+
 		RS485_TX_DATA_EF.motorPWM = Motor_Speed_PID.PIDmotorValue;
 		RS485_TX_DATA_SW.motorPWM = Motor_Speed_PID.PIDmotorValue;
 /*
@@ -103,5 +123,5 @@ void pid_step(void){
 		RS485_TX_DATA_SW.motorPWM = Motor_Speed_PID.PIDmotorValue;
 		Motor_Speed_PID.previousError = Motor_Speed_PID.error;
 		*/
-	}
+	//}
 }
