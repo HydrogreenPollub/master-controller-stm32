@@ -194,9 +194,8 @@ static void prepareNewDataToSend_DL(void) {
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.fcFanRPM.array[k];
 	}
 
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.interimSpeed;
-
-	dataToTx_DL[++j] = RS485_TX_DATA_EF.motorPWM;
+	dataToTx_DL[++j] = RS485_TX_DATA_SW.averageSpeed;
+	dataToTx_DL[++j] = RS485_TX_DATA_SW.motorPWM;
 
 	for (uint8_t k = 0; k < 4; k++) {
 		dataToTx_DL[++j] = RS485_TX_DATA_SW.H2_SENSOR_V.array[k];

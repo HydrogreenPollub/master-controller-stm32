@@ -55,6 +55,7 @@ uint16_t timeOf=0;
 uint16_t tick = 0;
 
 uint8_t z = 1;
+uint8_t count = 0;
 void measurements_step(void)
 {
 		laptime();
@@ -145,6 +146,12 @@ void laptime(void){
 
 void calcSpeed(void)
 {
+	count++;
+	if (count >= 100) {
+		uint8counter = speedPulsesToAverage / pulsesPerRevolution ;
+		calcAverageSpeed = 3600 *((counter * circumference) / laptime_milisecond_real);
+		count = 0;
+	}
 
 	//SPEED
 	//chwilowa zliczenie impulsow np w ciagu 100*milisekundy
