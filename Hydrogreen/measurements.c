@@ -148,7 +148,7 @@ void calcSpeed(void)
 {
 	count++;
 	if (count >= 100) {
-		uint8counter = speedPulsesToAverage / pulsesPerRevolution ;
+		uint8_t counter = speedPulsesToAverage / pulsesPerRevolution ;
 		calcAverageSpeed = 3600 *((counter * circumference) / laptime_milisecond_real);
 		count = 0;
 	}

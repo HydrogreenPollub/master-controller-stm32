@@ -48,39 +48,71 @@ extern RS485_BUFFER_DL RS485_BUFF_DL;
  * @struct RS485_RECEIVED_VERIFIED_DATA_DL
  * @brief Struktura zawierajaca otrzymane dane
  */
+
 typedef struct
 {
   ///< ELEMENTY W STRUKTURZE MUSZA BYC POSORTOWANE W PORZADKU MALEJACYM
   ///< https://www.geeksforgeeks.org/is-sizeof-for-a-struct-equal-to-the-sum-of-sizeof-of-each-member/
-  union
-  {
-	 float value;
-	 uint8_t array[4];
-  } FCC_V;
-  union
-   {
-     float value;
-     uint8_t array[4];
-   } FCC_TEMP;
-   union
-    {
-      float value;
-      char array[4];
-    } CURRENT_SENSOR_FC_TO_SCC;
-    union
-     {
-       float value;
-       uint8_t array[4];
-     } SCC_V;
-     union
-     {
-       uint16_t value;
-       uint8_t array[2];
-     } fcFanRPMC;
 
- // uint8_t fcToScMosfetPWM;
-  uint8_t emergencyC;
-
+	union {
+	  struct {
+	    uint8_t is_emergency:1;
+	    uint8_t is_hydrogen_leaking:1;
+	    uint8_t is_SC_relay_closed:1;
+	    uint8_t vehicle_is_speed_button_pressed:1;
+	    uint8_t vehicle_is_half_speed_button_pressed:1;
+	    uint8_t hydrogen_cell_button_state:2; // Split into two variables?
+	    uint8_t is_super_capacitor_button_pressed:1;
+	  };
+	  uint8_t logic_state;
+	} LOGIC_STRUCT;
+	union
+	{
+		float value;
+		uint8_t array[4];
+	} FC_CURRENT;
+	union
+	{
+		float value;
+		uint8_t array[4];
+	} CURRENT_SENSOR_FC_TO_SC;
+	union
+	{
+		float value;
+		uint8_t array[4];
+	} CURRENT_SENSOR_SC_TO_MOTOR;
+	union
+	{
+		float value;
+		uint8_t array[4];
+	} FC_V;
+	union
+	{
+		float value;
+		uint8_t array[4];
+	} SC_V;
+	union
+	{
+		float value;
+		uint8_t array[4];
+	} H2_SENSOR_V;
+	union
+	{
+		float value;
+		uint8_t array[4];
+	} FC_TEMP;
+	union
+	{
+		float value;
+		uint8_t array[2];
+	} FC_FAN_RPM;
+	uint8_t VEHICLE_AVG_SPEED;
+	uint8_t MOTOR_PWM;
+	union
+	{
+		float value;
+		uint8_t array[4];
+	} STHXD;
 } RS485_DATA_DL;
 extern RS485_DATA_DL RS485_DL_DATA_TO_TX;
 /**
