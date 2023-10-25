@@ -17,7 +17,7 @@
 // ******************************************************************************************************************************************************** //
 //Ramka danych z przeplywem energii
 #define UART_PORT_RS485_DL		huart4
-#define TX_FRAME_LENGHT_DL 		41					///< Dlugosc wysylanej ramki danych (z suma CRC)
+#define TX_FRAME_LENGHT_DL 		39					///< Dlugosc wysylanej ramki danych (z suma CRC)
 #define EOT_BYTE_DL			    0x17				///< Bajt wskazujacy na koniec ramki
 
 // ******************************************************************************************************************************************************** //
@@ -26,7 +26,7 @@ uint8_t dataFromRx_DL[RX_FRAME_LENGHT_DL]; ///< Tablica w ktorej zawarte sa niep
 uint16_t posInRxTab_DL = 0;	///< Aktualna pozycja w tabeli wykorzystywanej do odbioru danych
 volatile static uint8_t intRxCplt_DL; ///< Flaga informujaca o otrzymaniu nowego bajtu (gdy 1 - otrzymanowy nowy bajt)
 static uint8_t dataToTx_DL[TX_FRAME_LENGHT_DL]; ///< Tablica w ktorej zawarta jest ramka danych do wyslania
-//static uint16_t posInTxTab_DL=0;											///< Aktualna pozycja w tabeli wykorzystywanej do wysylania danych
+static uint16_t posInTxTab_DL=0;											///< Aktualna pozycja w tabeli wykorzystywanej do wysylania danych
 uint8_t rs485_flt_DL = RS485_NEW_DATA_TIMEOUT_DL;///< Zmienna przechowujaca aktualny kod bledu magistrali
 uint32_t rejectedFramesInRow_DL = 0;
 // ******************************************************************************************************************************************************** //
@@ -130,10 +130,40 @@ void rs485_step_DL(void) {
  * @brief Funkcja ktorej zadaniem jest obsluga linii TX, powinna zostac umieszczona w wewnatrz rs485_step() dla przeplywu energii
  */
 static void sendData_DL(void) {
-	HAL_UART_Transmit(&UART_PORT_RS485_DL, &RS485_BUFF_DL.tx,
-			TX_FRAME_LENGHT_DL, HAL_MAX_DELAY);
+	static uint16_t cntEndOfTxTick_DL = 0;							//Zmienna wykorzystywana do odliczenia czasu wskazujacego na koniec transmisji
 
-	prepareNewDataToSend_DL();
+	//Sprawdz czy wyslano cala ramke danych
+	if (posInTxTab_DL < TX_FRAME_LENGHT_DL)
+	{
+		//Nie, wysylaj dalej
+		RS485_BUFF_DL.tx = dataToTx_DL[posInTxTab_DL];
+
+		//Na czas wysylania danych wylacz przerwania
+		__disable_irq();
+		HAL_UART_Transmit(&UART_PORT_RS485_DL, &RS485_BUFF_DL.tx, 1, HAL_MAX_DELAY);
+		__enable_irq();
+
+		posInTxTab_DL++;
+	}
+	else if (cntEndOfTxTick_DL < TX_FRAME_LENGHT_DL)
+	{
+		//Cala ramka danych zostala wyslana, zacznij odliczac "czas przerwy" pomiedzy przeslaniem kolejnej ramki
+		cntEndOfTxTick_DL++;
+	}
+	else
+	{
+		//Przygotuj nowe dane do wysylki
+		cntEndOfTxTick_DL = 0;
+		posInTxTab_DL = 0;
+
+		prepareNewDataToSend_DL();
+	}
+
+
+	//HAL_UART_Transmit(&UART_PORT_RS485_DL, &RS485_BUFF_DL.tx,
+	//		TX_FRAME_LENGHT_DL, HAL_MAX_DELAY);
+
+	//prepareNewDataToSend_DL();
 }
 /**
  * @fn prepareNewDataToSend(void)
@@ -141,6 +171,7 @@ static void sendData_DL(void) {
  */
 static void prepareNewDataToSend_DL(void) {
 	uint8_t j = 0;
+	
 	RS485_DL_DATA_TO_TX.LOGIC_STRUCT.is_emergency = RS485_TX_DATA_EF.emergencyScenario;
 	RS485_DL_DATA_TO_TX.LOGIC_STRUCT.is_hydrogen_leaking = RS485_TX_DATA_SW.h2SensorDigitalPin;
 	RS485_DL_DATA_TO_TX.LOGIC_STRUCT.is_SC_relay_closed = RS485_RX_VERIFIED_DATA_SW.scClose;
@@ -148,62 +179,63 @@ static void prepareNewDataToSend_DL(void) {
 	RS485_DL_DATA_TO_TX.LOGIC_STRUCT.vehicle_is_half_speed_button_pressed = RS485_RX_VERIFIED_DATA_SW.halfGas;
 	RS485_DL_DATA_TO_TX.LOGIC_STRUCT.hydrogen_cell_button_state = RS485_TX_DATA_EF.fuellCellModeButtons;
 	RS485_DL_DATA_TO_TX.LOGIC_STRUCT.is_super_capacitor_button_pressed = RS485_RX_VERIFIED_DATA_SW.scClose;
-	//############ SEND ###############
-	dataToTx_DL[j] = RS485_DL_DATA_TO_TX.LOGIC_STRUCT.logic_state;
+	
+	dataToTx_DL[j] = RS485_DL_DATA_TO_TX.LOGIC_STRUCT.logic_state; // 1 b
 
-	for (uint8_t k = 0; k < 4; k++) {
+	for (uint8_t k = 0; k < 4; k++) { // 5 b
 		RS485_DL_DATA_TO_TX.FC_CURRENT.array[k] = RS485_RX_VERIFIED_DATA_EF.FC_CURRENT.array[k];
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.FC_CURRENT.array[k];
 	}
 
-	for (uint8_t k = 0; k < 4; k++) {
+	for (uint8_t k = 0; k < 4; k++) { // 9 b
 		RS485_DL_DATA_TO_TX.CURRENT_SENSOR_FC_TO_SC.array[k] = RS485_RX_VERIFIED_DATA_EF.CURRENT_SENSOR_FC_TO_SC.array[k];
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.CURRENT_SENSOR_FC_TO_SC.array[k];
 	}
 
-	for (uint8_t k = 0; k < 4; k++) {
+	for (uint8_t k = 0; k < 4; k++) { // 13 b
 		RS485_DL_DATA_TO_TX.CURRENT_SENSOR_SC_TO_MOTOR.array[k] = RS485_TX_DATA_SW.CURRENT_SENSOR_SC_TO_MOTOR.array[k];
 	    dataToTx_DL[++j] = RS485_TX_DATA_SW.CURRENT_SENSOR_SC_TO_MOTOR.array[k];
 	}
 
-	for (uint8_t k = 0; k < 4; k++) {
+	for (uint8_t k = 0; k < 4; k++) { // 17 b
 		RS485_DL_DATA_TO_TX.FC_V.array[k] = RS485_RX_VERIFIED_DATA_EF.FC_V.array[k];
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.FC_V.array[k];
 	}
 
-	for (uint8_t k = 0; k < 4; k++) {
+	for (uint8_t k = 0; k < 4; k++) { // 21 b
 		RS485_DL_DATA_TO_TX.SC_V.array[k] = RS485_RX_VERIFIED_DATA_EF.SC_V.array[k];
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.SC_V.array[k];
 	}
 
-	for (uint8_t k = 0; k < 4; k++) {
+	for (uint8_t k = 0; k < 4; k++) { // 25 b
 		RS485_DL_DATA_TO_TX.H2_SENSOR_V.array[k] = RS485_TX_DATA_SW.H2_SENSOR_V.array[k];
 		dataToTx_DL[++j] = RS485_TX_DATA_SW.H2_SENSOR_V.array[k];
 	}
 
-	for (uint8_t k = 0; k < 4; k++) {
+	for (uint8_t k = 0; k < 4; k++) { // 29 b
 		RS485_DL_DATA_TO_TX.FC_TEMP.array[k] = RS485_RX_VERIFIED_DATA_EF.FC_TEMP.array[k];
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.FC_TEMP.array[k];
 	}
 
-	for (uint8_t k = 0; k < 2; k++) {
+	for (uint8_t k = 0; k < 2; k++) { // 31 b
 		RS485_DL_DATA_TO_TX.FC_FAN_RPM.array[k] = RS485_RX_VERIFIED_DATA_EF.fcFanRPM.array[k];
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.fcFanRPM.array[k];
 	}
 
 	RS485_DL_DATA_TO_TX.VEHICLE_AVG_SPEED = RS485_TX_DATA_SW.averageSpeed;
 	RS485_DL_DATA_TO_TX.MOTOR_PWM = RS485_TX_DATA_SW.motorPWM;
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.averageSpeed;
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.motorPWM;
+	dataToTx_DL[++j] = RS485_TX_DATA_SW.averageSpeed; // 32 b
+	dataToTx_DL[++j] = RS485_TX_DATA_SW.motorPWM; // 33 b
 
-	RS485_DL_DATA_TO_TX.STHXD.value = 2137;
-	for (uint8_t k = 0; k < 4; k++) {
-		dataToTx_DL[++j] = RS485_DL_DATA_TO_TX.STHXD.array[k];
+	RS485_DL_DATA_TO_TX.HYDROGEN_PRESSURE.value = 2137; // TODO change
+	for (uint8_t k = 0; k < 4; k++) { // 37 b
+		dataToTx_DL[++j] = RS485_DL_DATA_TO_TX.HYDROGEN_PRESSURE.array[k];
 	}
+	dataToTx_DL[++j] = EOT_BYTE_DL; // 38 b
 	//OBLICZ SUME KONTROLNA
 
 	//Wrzuc obliczona sume kontrolna na koniec wysylanej tablicy
-	//dataToTx_DL[TX_FRAME_LENGHT_DL - 1] = crc_calc_TX_DL();
+	dataToTx_DL[TX_FRAME_LENGHT_DL - 1] = crc_calc_TX_DL(); // 39 b
 }
 
 

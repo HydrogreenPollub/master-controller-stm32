@@ -112,7 +112,7 @@ typedef struct
 	{
 		float value;
 		uint8_t array[4];
-	} STHXD;
+	} HYDROGEN_PRESSURE;
 } RS485_DATA_DL;
 extern RS485_DATA_DL RS485_DL_DATA_TO_TX;
 /**

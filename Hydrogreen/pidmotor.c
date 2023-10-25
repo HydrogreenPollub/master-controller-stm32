@@ -40,37 +40,38 @@ void pid_init(void){
 
 void pid_step(void){
 	//if (calcInterimSpeed >=1){
-		if (RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1)
-		{
-			// Softstart - 2 buttons
-			if (softstart_time_elapsed <= 5000) {
-				Motor_Speed_PID.PIDmotorValue = 0.018 * softstart_time_elapsed + 10;
-				softstart_time_elapsed++;
-			}
+	if (RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1)
+	{
+		// Softstart - 2 buttons
+		if (softstart_time_elapsed <= 5000) {
+			Motor_Speed_PID.PIDmotorValue = 0.018 * softstart_time_elapsed + 10; // (100 - 10)/(5000 - 0)
+			softstart_time_elapsed++;
 		}
-		else if (RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0)
-		{
-			// Full gas
-			Motor_Speed_PID.PIDmotorValue = 235;
-			half_gas_time_elapsed = 0;
+	}
+	else if (RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0)
+	{
+		// Full gas
+		Motor_Speed_PID.PIDmotorValue = 235;
+		half_gas_time_elapsed = 0;
+	}
+	else if (RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0)
+	{
+		// Buttons released - no power on motor
+		Motor_Speed_PID.PIDmotorValue = 0;
+		half_gas_time_elapsed = 0;
+	}
+	else if (RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1 )
+	{
+		// Half gas - slow linear PWM increase
+		//Motor_Speed_PID.PIDmotorValue = 0.025 * half_gas_time_elapsed; // (125 - 0)/(5000 - 0)
+		Motor_Speed_PID.PIDmotorValue = sqrtf((float) half_gas_time_elapsed * 5000.0) + 40; // (150 - 30)/(5000 - 0)
+		if (half_gas_time_elapsed <= 5000) {
+			half_gas_time_elapsed++;
 		}
-		else if (RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0)
-		{
-			// Buttons released - no power on motor
-			Motor_Speed_PID.PIDmotorValue = 0;
-			half_gas_time_elapsed = 0;
-		}
-		else if (RS485_RX_VERIFIED_DATA_SW.fullGas == 0 && RS485_RX_VERIFIED_DATA_SW.halfGas == 1 )
-		{
-			// Half gas - slow linear PWM increase
-			Motor_Speed_PID.PIDmotorValue = 0.025 * half_gas_time_elapsed;
-			if (half_gas_time_elapsed <= 5000) {
-				half_gas_time_elapsed++;
-			}
-		}
+	}
 
-		RS485_TX_DATA_EF.motorPWM = Motor_Speed_PID.PIDmotorValue;
-		RS485_TX_DATA_SW.motorPWM = Motor_Speed_PID.PIDmotorValue;
+	RS485_TX_DATA_EF.motorPWM = Motor_Speed_PID.PIDmotorValue;
+	RS485_TX_DATA_SW.motorPWM = Motor_Speed_PID.PIDmotorValue;
 /*
 		//PWM = max dla speed = 30km/h
 			if(RS485_RX_VERIFIED_DATA_SW.fullGas == 1 && RS485_RX_VERIFIED_DATA_SW.halfGas == 0 ){
