@@ -106,8 +106,14 @@ typedef struct
 		float value;
 		uint8_t array[2];
 	} FC_FAN_RPM;
-	uint8_t VEHICLE_AVG_SPEED;
+	union
+	{
+		float value;
+		uint8_t array[4];
+	} VEHICLE_AVG_SPEED;
+
 	uint8_t MOTOR_PWM;
+
 	union
 	{
 		float value;

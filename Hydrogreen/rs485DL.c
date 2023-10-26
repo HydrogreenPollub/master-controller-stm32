@@ -17,7 +17,7 @@
 // ******************************************************************************************************************************************************** //
 //Ramka danych z przeplywem energii
 #define UART_PORT_RS485_DL		huart4
-#define TX_FRAME_LENGHT_DL 		39					///< Dlugosc wysylanej ramki danych (z suma CRC)
+#define TX_FRAME_LENGHT_DL 		42					///< Dlugosc wysylanej ramki danych (z suma CRC)
 #define EOT_BYTE_DL			    0x17				///< Bajt wskazujacy na koniec ramki
 
 // ******************************************************************************************************************************************************** //
@@ -29,6 +29,7 @@ static uint8_t dataToTx_DL[TX_FRAME_LENGHT_DL]; ///< Tablica w ktorej zawarta je
 static uint16_t posInTxTab_DL=0;											///< Aktualna pozycja w tabeli wykorzystywanej do wysylania danych
 uint8_t rs485_flt_DL = RS485_NEW_DATA_TIMEOUT_DL;///< Zmienna przechowujaca aktualny kod bledu magistrali
 uint32_t rejectedFramesInRow_DL = 0;
+size_t frameSizeTX_DL = 0;
 // ******************************************************************************************************************************************************** //
 
 /**
@@ -115,6 +116,7 @@ uint8_t crc_calc_TX_DL(void) {
 void rs485_init_DL(void) {
 	//HAL_UART_Receive_DMA(&UART_PORT_RS485_DL, &RS485_BUFF_DL.rx, 1);				//Rozpocznij nasluchiwanie
 	prepareNewDataToSend_DL();					//Przygotuj nowy pakiet danych
+	frameSizeTX_DL = sizeof(RS485_DL_DATA_TO_TX);
 }
 
 /**
@@ -222,20 +224,23 @@ static void prepareNewDataToSend_DL(void) {
 		dataToTx_DL[++j] = RS485_RX_VERIFIED_DATA_EF.fcFanRPM.array[k];
 	}
 
-	RS485_DL_DATA_TO_TX.VEHICLE_AVG_SPEED = RS485_TX_DATA_SW.averageSpeed;
+	RS485_DL_DATA_TO_TX.VEHICLE_AVG_SPEED.value = (float) RS485_TX_DATA_SW.averageSpeed;
+	for (uint8_t k = 0; k < 4; k++) {
+		dataToTx_DL[++j] = RS485_DL_DATA_TO_TX.VEHICLE_AVG_SPEED.array[k]; // 35 b
+	}
+
 	RS485_DL_DATA_TO_TX.MOTOR_PWM = RS485_TX_DATA_SW.motorPWM;
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.averageSpeed; // 32 b
-	dataToTx_DL[++j] = RS485_TX_DATA_SW.motorPWM; // 33 b
+	dataToTx_DL[++j] = RS485_TX_DATA_SW.motorPWM; // 36 b
 
 	RS485_DL_DATA_TO_TX.HYDROGEN_PRESSURE.value = 2137; // TODO change
-	for (uint8_t k = 0; k < 4; k++) { // 37 b
+	for (uint8_t k = 0; k < 4; k++) { // 40 b
 		dataToTx_DL[++j] = RS485_DL_DATA_TO_TX.HYDROGEN_PRESSURE.array[k];
 	}
-	dataToTx_DL[++j] = EOT_BYTE_DL; // 38 b
+	dataToTx_DL[++j] = EOT_BYTE_DL; // 41 b
 	//OBLICZ SUME KONTROLNA
 
 	//Wrzuc obliczona sume kontrolna na koniec wysylanej tablicy
-	dataToTx_DL[TX_FRAME_LENGHT_DL - 1] = crc_calc_TX_DL(); // 39 b
+	dataToTx_DL[TX_FRAME_LENGHT_DL - 1] = crc_calc_TX_DL(); // 42 b
 }
 
 
