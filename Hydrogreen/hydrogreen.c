@@ -56,17 +56,11 @@ static inline void hydrogreen_step1kHz(void)
 #ifdef HYDROGREEN_DEBUG
   HAL_GPIO_WritePin(GPIOA, DBG_Pin, GPIO_PIN_RESET);
 #endif
-  static uint8_t cnt = 0;
+
   hydrogensensor_step();
   measurements_step();
   pid_step();
   safety_step();
-  if(cnt >= DATA_LOGGER_DELAY)
-  {
-	  rs485_step_DL();
-	  cnt = 0;
-  }
-  cnt ++;
 
   watchdog_step();
 #ifdef HYDROGREEN_DEBUG
@@ -78,11 +72,22 @@ static inline void hydrogreen_step1kHz(void)
 * @fn hydrogreen_step(void)
 * @brief Glowna funkcja wykonywana co T = 0,1ms, powinna zostac wywolana wewnatrz hydrogreen_main()
 */
+uint16_t cnt = 0;
 static inline void hydrogreen_step10kHz(void)
 {
 
      rs485_step_SW();
 	 rs485_step_EF();
+
+	 if (cnt <= TX_FRAME_LENGHT_DL)
+	 {
+		  rs485_step_DL();
+	 }
+	 cnt++;
+	 if (cnt == (2000 + TX_FRAME_LENGHT_DL))
+	 {
+		 cnt = 0;
+	 }
 
 }
 
@@ -92,28 +97,28 @@ static inline void hydrogreen_step10kHz(void)
 */
 void hydrogreen_main(void)
 {
-  hydrogreen_init();
+    hydrogreen_init();
 
-  while (1)
+    while (1)
     {
-      //Sprawdz czy wystapil tick timera nastepujacy z f = 1kHz
-    if (timers_tick1kHz)
-	{
-	  timers_beforeStep1kHz();
+		//Sprawdz czy wystapil tick timera nastepujacy z f = 1kHz
+		if (timers_tick1kHz)
+		{
+		    timers_beforeStep1kHz();
 
-	  hydrogreen_step1kHz();
+		    hydrogreen_step1kHz();
 
-	  timers_afterStep1kHz();
+		    timers_afterStep1kHz();
 
-	  timers_tick1kHz = 0;
-	}
+		    timers_tick1kHz = 0;
+		}
 
-      //Sprawdz czy wystapil tick timera nastepujacy z f = 10kHz
-      if (timers_tick10kHz)
-	{
-	  hydrogreen_step10kHz();
-	  timers_tick10kHz = 0;
-	}
+        //Sprawdz czy wystapil tick timera nastepujacy z f = 10kHz
+    	if (timers_tick10kHz)
+		{
+		    hydrogreen_step10kHz();
+		    timers_tick10kHz = 0;
+		}
     }
 }
 

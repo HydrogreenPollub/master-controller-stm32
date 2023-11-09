@@ -24,11 +24,15 @@ extern uint8_t rs485_flt_DL; 					///< Zmienna przechowujaca aktualny kod bledu 
 extern void rs485_init_DL(void);					///< Inicjalizacja magistrali RS-485, umiescic wewnatrz hydrogreen_init(void)
 extern void rs485_step_DL(void);					///< Funkcja obslugujaca magistrale, umiescic wewnatrz hydrogreen_step(void)
 
+// ******************************************************************************************************************************************************** //
+//Ramka danych z telemetria
 #define UART_PORT_RS485_DL		huart4
+#define TX_FRAME_LENGHT_DL 		48					///< Dlugosc wysylanej ramki danych (z suma CRC)
+#define EOT_BYTE_DL			    0x17				///< Bajt wskazujacy na koniec ramki
 #define RX_FRAME_LENGHT_DL 		21					///< Dlugosc otrzymywanej ramki danych (z suma CRC)#define EOT_BYTE_EF			    0x17				///< Bajt wskazujacy na koniec ramki
 
 // ******************************************************************************************************************************************************** //
-//Zmienne dla transmisji danych z przeplywem energii
+//Zmienne dla transmisji danych z telemetria
 extern uint8_t dataFromRx_DL[RX_FRAME_LENGHT_DL]; 				///< Tablica w ktorej zawarte sa nieprzetworzone przychodzace dane
 extern uint16_t posInRxTab_DL;		///< Aktualna pozycja w tabeli wykorzystywanej do odbioru danych
 extern uint8_t crcSumOnMCU_DL;
